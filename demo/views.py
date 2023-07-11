@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from demo.serializers import UserSerializer
+from .db_service import create_test_model, delete_test_model
 # Create your views here.
 
 
@@ -28,4 +29,9 @@ class TableViewSet(viewsets.ViewSet):
         return Response('XXX')
 
     def create(self, request):
+        create_test_model()
+        return Response("OK")
+
+    def destroy(self, request, pk):
+        delete_test_model()
         return Response("OK")
