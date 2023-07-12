@@ -9,6 +9,8 @@ DB_USER
 DB_PASSWORD
 ```
 
+Install requirements from **requirements.txt**
+
 # Migrate DB
 ```
 python manage.py makemigrations
