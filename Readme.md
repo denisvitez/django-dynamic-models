@@ -80,7 +80,7 @@ Response returns the model that was created or an error if it occurs.
 
 ## Update existing model
 ### URL:
-http://127.0.0.1:8000/api/table/<pk>/
+PUT: http://127.0.0.1:8000/api/table/<primary_key>/
 
 ### Request:
 Request must contain the new model definition.
@@ -119,5 +119,58 @@ Response returns the new model definition or an error it updates failed.
         "name": "third_column",
         "type": "STRING"
     }]
+}
+```
+
+## Delete existing model
+### URL:
+DELETE: http://127.0.0.1:8000/api/table/<primary_key>/
+
+### Response
+Response returns 200 OK if the model was deleted or an error if delete fails.
+
+## Get all rows for a model
+### URL:
+GET: http://127.0.0.1:8000/api/table/<primary_key>/rows
+
+### Response
+Response return a list of all rows currently stored for the model.
+```
+[
+    {
+        "first_column": 1,
+        "second_column": "test123",
+        "third_column": null
+    },
+    {
+        "first_column": 1,
+        "second_column": "test123",
+        "third_column": "this works!"
+    }
+]
+```
+
+## Add new row for the model
+### URL:
+GET: http://127.0.0.1:8000/api/table/<primary_key>/row/
+
+### Request
+Request must contain valid data for selected model.
+```
+{
+    "first_column": 1,
+    "second_column": "test123",
+    "third_column": "this works!"
+}
+```
+
+### Response
+Response returns the created row, or an error if insert fails.
+```
+{
+    "pk": 2,
+    "first_column": 1,
+    "second_column": "test123",
+    "third_column": "this works!"
 }
 ```
