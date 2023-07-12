@@ -10,8 +10,9 @@ from rest_framework.parsers import JSONParser
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from demo.serializers import UserSerializer, DynamicTableSerializer
-from .db_service import create_test_model, delete_test_model, create_model, delete_model, get_rows, add_row
+from demo.serializers import UserSerializer, DynamicTableSerializer, DynamicTableBasicSerializer
+from .db_service import create_test_model, delete_test_model, create_model, delete_model, get_rows, add_row, get_tables, \
+    update_model
 
 
 # Create your views here.
@@ -41,7 +42,13 @@ class TestViewSet(viewsets.ViewSet):
 
 class TableViewSet(viewsets.ViewSet):
     def list(self, response):
-        return Response('XXX')
+        dynamic_tables = get_tables()
+        serializer = DynamicTableBasicSerializer(data=dynamic_tables, many=True)
+        serializer.is_valid()
+        json_data = JSONRenderer().render(serializer.data)
+        return HttpResponse(
+            json_data, content_type='application/json'
+        )
 
     def create(self, request):
         print(request.body)
@@ -54,10 +61,27 @@ class TableViewSet(viewsets.ViewSet):
             return HttpResponse(
                 json_data, content_type='application/json'
             )
-        print(serializer.validated_data)
-        print(serializer.data)
         create_model(serializer.data)
-        return Response("OK")
+        json_data = JSONRenderer().render(serializer.data)
+        return HttpResponse(
+            json_data, content_type='application/json'
+        )
+
+    def update(self, request, pk=None):
+        json_data = request.body
+        stream = io.BytesIO(json_data)
+        python_data = JSONParser().parse(stream)
+        serializer = DynamicTableSerializer(data=python_data)
+        if not serializer.is_valid():
+            json_data = JSONRenderer().render(serializer.errors)
+            return HttpResponse(
+                json_data, content_type='application/json'
+            )
+        update_model(pk, serializer.data)
+        json_data = JSONRenderer().render(serializer.data)
+        return HttpResponse(
+            json_data, content_type='application/json'
+        )
 
     def destroy(self, request, pk):
         delete_model(pk)

@@ -18,3 +18,8 @@ class DynamicTableColumnSerializer(serializers.Serializer):
 class DynamicTableSerializer(serializers.Serializer):
     name = serializers.CharField()
     columns = DynamicTableColumnSerializer(many=True)
+
+
+class DynamicTableBasicSerializer(serializers.Serializer):
+    pk = serializers.IntegerField()
+    name = serializers.CharField()

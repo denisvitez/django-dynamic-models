@@ -36,6 +36,52 @@ def create_model(model_data):
         schema_editor.create_model(dynamic_model)
 
 
+def update_model(pk, model_data):
+    with connection.schema_editor() as schema_editor:
+        existing_model = DynamicTable.objects.get(pk=pk)
+        old_columns = existing_model.dynamictablecolumn_set.all()
+        old_fields = get_fields_for_columns(old_columns)
+        old_dynamic_model = create_dynamic_model(existing_model.name, old_fields, 'dynamic')
+        has_name_changed = existing_model.name != model_data.get('name')
+        if has_name_changed:
+            # rename the table
+            old_name = existing_model.name
+            existing_model.name = model_data.get('name')
+            dynamic_model = create_dynamic_model(old_name, {}, 'dynamic')
+            schema_editor.alter_db_table(dynamic_model, f"dynamic_{old_name}", f"dynamic_{existing_model.name}")
+            existing_model.save()
+        # delete all column rows and insert new ones
+        DynamicTableColumn.objects.filter(table=existing_model).delete()
+        columns = model_data.get('columns')
+        for c in columns:
+            new_column = DynamicTableColumn(name=c.get('name'), type=c.get('type'), table=existing_model)
+            new_column.save()
+        # update dynamic table structure
+        new_columns = existing_model.dynamictablecolumn_set.all()
+        new_fields = get_fields_for_columns(new_columns)
+        new_dynamic_model = create_dynamic_model(existing_model.name, new_fields, 'dynamic')
+        print(old_dynamic_model._meta.get_fields())
+        print(new_dynamic_model._meta.get_fields())
+        # if field is in old model, but not in new model, it must be deleted
+        for old_field in old_dynamic_model._meta.get_fields():
+            still_exists = False
+            for new_field in new_dynamic_model._meta.get_fields():
+                if old_field.attname == new_field.attname:
+                    still_exists = True
+                    break
+            if not still_exists:
+                schema_editor.remove_field(old_dynamic_model, old_field)
+        # if field is in the new model but not in the new model, it must be added
+        for new_field in new_dynamic_model._meta.get_fields():
+            existed_before = False
+            for old_field in old_dynamic_model._meta.get_fields():
+                if old_field.attname == new_field.attname:
+                    existed_before = True
+            if not existed_before:
+                new_field.null = True
+                schema_editor.add_field(new_dynamic_model, new_field)
+
+
 def delete_test_model():
     with connection.schema_editor() as schema_editor:
         fields = {}
@@ -66,12 +112,16 @@ def get_rows(pk):
     return result
 
 
+def get_tables():
+    existing_models = DynamicTable.objects.all()
+    return existing_models
+
+
 def add_row(pk, row_data):
     existing_model = DynamicTable.objects.get(pk=pk)
     model_columns = existing_model.dynamictablecolumn_set.all()
     fields = get_fields_for_columns(model_columns)
     dynamic_model = create_dynamic_model(existing_model.name, fields, 'dynamic')
-    print(row_data)
     new_row = dynamic_model.objects.create(**row_data)
     # create response model
     response_model = {
