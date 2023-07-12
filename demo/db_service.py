@@ -49,6 +49,39 @@ def delete_model(pk):
     existing_model.delete()
 
 
+def get_rows(pk):
+    existing_model = DynamicTable.objects.get(pk=pk)
+    model_columns = existing_model.dynamictablecolumn_set.all()
+    fields = get_fields_for_columns(model_columns)
+    dynamic_model = create_dynamic_model(existing_model.name, fields, 'dynamic')
+    result = []
+    for dm in dynamic_model.objects.all():
+        model_resp = {}
+        for mc in model_columns:
+            model_resp[mc.name] = getattr(dm, mc.name)
+        result.append(model_resp)
+    return result
+
+
+def add_row(pk, row_data):
+    existing_model = DynamicTable.objects.get(pk=pk)
+    model_columns = existing_model.dynamictablecolumn_set.all()
+    fields = get_fields_for_columns(model_columns)
+    dynamic_model = create_dynamic_model(existing_model.name, fields, 'dynamic')
+
+
+def get_fields_for_columns(columns):
+    fields = {}
+    for mc in columns:
+        model_type = models.CharField(max_length=255)
+        if mc.type == 'INTEGER':
+            model_type = models.IntegerField()
+        elif mc.type == 'BOOLEAN':
+            model_type = models.BooleanField()
+        fields[mc.name] = model_type
+    return fields
+
+
 # Code copied from: https://code.djangoproject.com/wiki/DynamicModels
 def create_dynamic_model(name, fields=None, app_label='', module='', options=None, admin_opts=None):
     """
