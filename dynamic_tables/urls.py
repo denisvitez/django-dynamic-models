@@ -22,7 +22,7 @@ from demo import views
 router = routers.DefaultRouter()
 router.register(r'api/users', views.UserViewSet)
 router.register(r'api/test', views.TestViewSet, basename="Test")
-router.register(r'api/table', views.TableViewSet, basename="Test")
+router.register(r'api/table', views.TableViewSet, basename="Table")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
