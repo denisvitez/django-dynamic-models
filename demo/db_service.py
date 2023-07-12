@@ -47,8 +47,9 @@ def delete_model(pk):
     # Delete table record
     existing_model = DynamicTable.objects.get(pk=pk)
     dynamic_model = create_dynamic_model(existing_model.name, {}, 'dynamic')
+    existing_model.delete()
     with connection.schema_editor() as schema_editor:
-        existing_model.delete()
+        schema_editor.delete_model(dynamic_model)
 
 
 def get_rows(pk):
