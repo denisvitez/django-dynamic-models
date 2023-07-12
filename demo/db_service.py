@@ -68,6 +68,15 @@ def add_row(pk, row_data):
     model_columns = existing_model.dynamictablecolumn_set.all()
     fields = get_fields_for_columns(model_columns)
     dynamic_model = create_dynamic_model(existing_model.name, fields, 'dynamic')
+    print(row_data)
+    new_row = dynamic_model.objects.create(**row_data)
+    # create response model
+    response_model = {
+        'pk': new_row.pk
+    }
+    for mc in model_columns:
+        response_model[mc.name] = getattr(new_row, mc.name)
+    return response_model
 
 
 def get_fields_for_columns(columns):

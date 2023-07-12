@@ -11,7 +11,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from demo.serializers import UserSerializer, DynamicTableSerializer
-from .db_service import create_test_model, delete_test_model, create_model, delete_model, get_rows
+from .db_service import create_test_model, delete_test_model, create_model, delete_model, get_rows, add_row
 
 
 # Create your views here.
@@ -74,4 +74,11 @@ class TableViewSet(viewsets.ViewSet):
 
     @action(methods=['post'], detail=True)
     def row(self, request, pk):
-        return Response("ADD ROW")
+        json_data = request.body
+        stream = io.BytesIO(json_data)
+        python_data = JSONParser().parse(stream)
+        new_row = add_row(pk, python_data)
+        json_data = JSONRenderer().render(new_row)
+        return HttpResponse(
+            json_data, content_type='application/json'
+        )
